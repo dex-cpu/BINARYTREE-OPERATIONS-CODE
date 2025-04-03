@@ -1,0 +1,369 @@
+//SIT/B/01-03274/2023 SILENT MAKORI MONARI
+//SIT/B/01-03269/2023 DAVID WERE
+//SIT/B/01-03275/2023 BETHWEL KIPKIRUI
+//EDS/B/01-06615/2024 HARNINGTONE OCHIENG OTIENO
+
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <string>
+#include <algorithm>
+
+class TreeNode {
+public:
+    int value;
+    TreeNode* left;
+    TreeNode* right;
+    
+    // Constructor
+    TreeNode(int val) : value(val), left(nullptr), right(nullptr) {}
+};
+
+class BinaryTree {
+private:
+    TreeNode* root;
+    
+    // Helper methods for recursive operations
+    void _insertRecursive(TreeNode* &node, int value) {
+        if (node == nullptr) {
+            node = new TreeNode(value);
+            return;
+        }
+        
+        // For BST property: left < node < right
+        if (value < node->value) {
+            _insertRecursive(node->left, value);
+        } else {
+            _insertRecursive(node->right, value);
+        }
+    }
+    
+    void _inorderRecursive(TreeNode* node, std::vector<int>& result) {
+        if (node) {
+            _inorderRecursive(node->left, result);
+            result.push_back(node->value);
+            _inorderRecursive(node->right, result);
+        }
+    }
+    
+    void _preorderRecursive(TreeNode* node, std::vector<int>& result) {
+        if (node) {
+            result.push_back(node->value);
+            _preorderRecursive(node->left, result);
+            _preorderRecursive(node->right, result);
+        }
+    }
+    
+    void _postorderRecursive(TreeNode* node, std::vector<int>& result) {
+        if (node) {
+            _postorderRecursive(node->left, result);
+            _postorderRecursive(node->right, result);
+            result.push_back(node->value);
+        }
+    }
+    
+    TreeNode* _searchRecursive(TreeNode* node, int value) {
+        if (node == nullptr || node->value == value) {
+            return node;
+        }
+        
+        if (value < node->value) {
+            return _searchRecursive(node->left, value);
+        }
+        return _searchRecursive(node->right, value);
+    }
+    
+    TreeNode* _deleteRecursive(TreeNode* node, int value) {
+        // Base case: empty tree or value not found
+        if (node == nullptr) {
+            return nullptr;
+        }
+        
+        // Search for the node to delete
+        if (value < node->value) {
+            node->left = _deleteRecursive(node->left, value);
+        } else if (value > node->value) {
+            node->right = _deleteRecursive(node->right, value);
+        } else {
+            // Node found - handle deletion cases
+            
+            // Case 1: Leaf node (no children)
+            if (node->left == nullptr && node->right == nullptr) {
+                delete node;
+                return nullptr;
+            }
+            
+            // Case 2: Node with only one child
+            if (node->left == nullptr) {
+                TreeNode* temp = node->right;
+                delete node;
+                return temp;
+            }
+            if (node->right == nullptr) {
+                TreeNode* temp = node->left;
+                delete node;
+                return temp;
+            }
+            
+            // Case 3: Node with two children
+            // Find inorder successor (smallest value in right subtree)
+            int successorValue = _findMinValue(node->right);
+            node->value = successorValue;  // Replace with successor
+            // Delete the successor
+            node->right = _deleteRecursive(node->right, successorValue);
+        }
+        
+        return node;
+    }
+    
+    int _findMinValue(TreeNode* node) {
+        TreeNode* current = node;
+        while (current->left != nullptr) {
+            current = current->left;
+        }
+        return current->value;
+    }
+    
+    int _heightRecursive(TreeNode* node) {
+        if (node == nullptr) {
+            return -1;  // Height of empty tree is -1
+        }
+        
+        int leftHeight = _heightRecursive(node->left);
+        int rightHeight = _heightRecursive(node->right);
+        
+        return std::max(leftHeight, rightHeight) + 1;
+    }
+    
+    int _sizeRecursive(TreeNode* node) {
+        if (node == nullptr) {
+            return 0;
+        }
+        
+        return 1 + _sizeRecursive(node->left) + _sizeRecursive(node->right);
+    }
+    
+    std::pair<bool, int> _isBalancedRecursive(TreeNode* node) {
+        if (node == nullptr) {
+            return {true, -1};
+        }
+        
+        auto leftResult = _isBalancedRecursive(node->left);
+        auto rightResult = _isBalancedRecursive(node->right);
+        
+        bool leftBalanced = leftResult.first;
+        int leftHeight = leftResult.second;
+        
+        bool rightBalanced = rightResult.first;
+        int rightHeight = rightResult.second;
+        
+        // Check if balanced
+        bool isBalanced = (leftBalanced && rightBalanced && 
+                        std::abs(leftHeight - rightHeight) <= 1);
+        
+        // Calculate height
+        int height = std::max(leftHeight, rightHeight) + 1;
+        
+        return {isBalanced, height};
+    }
+    
+    void _printTreeRecursive(TreeNode* node, int level, std::vector<std::string>& lines) {
+        if (node != nullptr) {
+            _printTreeRecursive(node->right, level + 1, lines);
+            
+            // Make sure we have enough lines in our vector
+            while (level >= lines.size()) {
+                lines.push_back("");
+            }
+            
+            lines[level] = std::string(level * 3, ' ') + std::to_string(node->value);
+            _printTreeRecursive(node->left, level + 1, lines);
+        }
+    }
+    
+    // Helper method to clean up memory when destructing
+    void _destroyRecursive(TreeNode* node) {
+        if (node) {
+            _destroyRecursive(node->left);
+            _destroyRecursive(node->right);
+            delete node;
+        }
+    }
+    
+public:
+    // Constructor
+    BinaryTree() : root(nullptr) {}
+    
+    // Destructor to clean up memory
+    ~BinaryTree() {
+        clear();
+    }
+    
+    // INSERTION OPERATIONS
+    void insert(int value) {
+        _insertRecursive(root, value);
+    }
+    
+    // TRAVERSAL OPERATIONS
+    std::vector<int> inorderTraversal() {
+        std::vector<int> result;
+        _inorderRecursive(root, result);
+        return result;
+    }
+    
+    std::vector<int> preorderTraversal() {
+        std::vector<int> result;
+        _preorderRecursive(root, result);
+        return result;
+    }
+    
+    std::vector<int> postorderTraversal() {
+        std::vector<int> result;
+        _postorderRecursive(root, result);
+        return result;
+    }
+    
+    std::vector<int> levelOrderTraversal() {
+        std::vector<int> result;
+        if (!root) {
+            return result;
+        }
+        
+        std::queue<TreeNode*> queue;
+        queue.push(root);
+        
+        while (!queue.empty()) {
+            TreeNode* current = queue.front();
+            queue.pop();
+            result.push_back(current->value);
+            
+            if (current->left) {
+                queue.push(current->left);
+            }
+            if (current->right) {
+                queue.push(current->right);
+            }
+        }
+        
+        return result;
+    }
+    
+    // SEARCH OPERATIONS
+    bool search(int value) {
+        return _searchRecursive(root, value) != nullptr;
+    }
+    
+    // DELETE OPERATIONS
+    void remove(int value) {
+        root = _deleteRecursive(root, value);
+    }
+    
+    // UTILITY OPERATIONS
+    int height() {
+        return _heightRecursive(root);
+    }
+    
+    int size() {
+        return _sizeRecursive(root);
+    }
+    
+    bool isEmpty() {
+        return root == nullptr;
+    }
+    
+    void clear() {
+        _destroyRecursive(root);
+        root = nullptr;
+    }
+    
+    bool isBalanced() {
+        return _isBalancedRecursive(root).first;
+    }
+    
+    std::string printTree() {
+        std::vector<std::string> lines;
+        _printTreeRecursive(root, 0, lines);
+        
+        std::string result;
+        for (const auto& line : lines) {
+            result += line + "\n";
+        }
+        return result;
+    }
+};
+
+// Example usage
+int main() {
+    // Create a binary search tree
+    BinaryTree tree;
+    
+    std::cout << "1. Inserting values: 50, 30, 70, 20, 40, 60, 80" << std::endl;
+    int values[] = {50, 30, 70, 20, 40, 60, 80};
+    for (int value : values) {
+        tree.insert(value);
+    }
+    
+    std::cout << "2. Tree visualization:" << std::endl;
+    std::cout << tree.printTree() << std::endl;
+    
+    std::cout << "3. Traversals:" << std::endl;
+    
+    std::cout << "   Inorder: ";
+    for (int val : tree.inorderTraversal()) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "   Preorder: ";
+    for (int val : tree.preorderTraversal()) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "   Postorder: ";
+    for (int val : tree.postorderTraversal()) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "   Level-order: ";
+    for (int val : tree.levelOrderTraversal()) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "\n4. Tree properties:" << std::endl;
+    std::cout << "   Height: " << tree.height() << std::endl;
+    std::cout << "   Size: " << tree.size() << std::endl;
+    std::cout << "   Is balanced: " << (tree.isBalanced() ? "Yes" : "No") << std::endl;
+    
+    std::cout << "\n5. Search operations:" << std::endl;
+    std::cout << "   Search for 40: " << (tree.search(40) ? "Found" : "Not found") << std::endl;
+    std::cout << "   Search for 55: " << (tree.search(55) ? "Found" : "Not found") << std::endl;
+    
+    std::cout << "\n6. Delete operations:" << std::endl;
+    std::cout << "   Deleting 20 (leaf node)" << std::endl;
+    tree.remove(20);
+    std::cout << tree.printTree() << std::endl;
+    
+    std::cout << "   Deleting 30 (node with one child)" << std::endl;
+    tree.remove(30);
+    std::cout << tree.printTree() << std::endl;
+    
+    std::cout << "   Deleting 50 (root node with two children)" << std::endl;
+    tree.remove(50);
+    std::cout << tree.printTree() << std::endl;
+    
+    std::cout << "\n7. Final inorder traversal:" << std::endl;
+    std::cout << "   ";
+    for (int val : tree.inorderTraversal()) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "\n8. Clearing the tree" << std::endl;
+    tree.clear();
+    std::cout << "   Is empty: " << (tree.isEmpty() ? "Yes" : "No") << std::endl;
+    
+    return 0;
+}
